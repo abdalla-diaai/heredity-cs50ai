@@ -139,8 +139,37 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         * everyone in set `have_trait` has the trait, and
         * everyone not in set` have_trait` does not have the trait.
     """
-    raise NotImplementedError
-
+    joint_p = 1
+    for person in people:
+        if people[person]['father'] is None and people[person]['mother'] is None:
+            if people[person]['name'] in one_gene:
+                joint_p *= PROBS["gene"][1]
+                if people[person]['name'] in have_trait:
+                    joint_p *= PROBS["trait"][1][True]
+                else:
+                    joint_p *= PROBS["trait"][1][False]
+                
+            if people[person]['name'] in two_genes:
+                joint_p *= PROBS["gene"][2]
+                if people[person]['name'] in have_trait:
+                    joint_p *= PROBS["trait"][2][True]
+                else:
+                    joint_p *= PROBS["trait"][2][False]
+            else:
+                joint_p *= PROBS["gene"][0]
+                if people[person]['name'] in have_trait:
+                    joint_p *= PROBS["trait"][0][True]
+                else:
+                    joint_p *= PROBS["trait"][0][False]
+        else:
+            if people[person]['name'] in one_gene:
+                    joint_p *= (((1 - PROBS["mutation"]) * (1 - PROBS["mutation"])) + (PROBS["mutation"] * PROBS["mutation"]))
+                    if people[person]['name'] in have_trait:
+                        joint_p *= PROBS["trait"][1][True]
+                    else:
+                        joint_p *= PROBS["trait"][1][False]
+    print(joint_p)
+    return joint_p
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
     """
@@ -157,7 +186,10 @@ def normalize(probabilities):
     Update `probabilities` such that each probability distribution
     is normalized (i.e., sums to 1, with relative proportions the same).
     """
-    raise NotImplementedError
+    total_inverse = 1.0 / sum(probabilities.values())
+    for key, val in probabilities.items():
+        probabilities[key] = val * total_inverse
+    return probabilities
 
 
 if __name__ == "__main__":
