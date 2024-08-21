@@ -320,26 +320,25 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
     """
     for person in probabilities:
         if person in one_gene:
-            probabilities[person]["gene"][1] = p
+            probabilities[person]["gene"][1] += p
             if person in have_trait:
-                probabilities[person]["trait"][True] = p
+                probabilities[person]["trait"][True] += p
             else:
-                probabilities[person]["trait"][False] = p
+                probabilities[person]["trait"][False] += p
     
         elif person in two_genes:
-            probabilities[person]["gene"][2] = p
+            probabilities[person]["gene"][2] += p
             if person in have_trait:
-                probabilities[person]["trait"][True] = p
+                probabilities[person]["trait"][True] += p
             else:
-                probabilities[person]["trait"][False] = p
+                probabilities[person]["trait"][False] += p
 
-        elif person not in one_gene and person not in two_genes:
+        else:
+            probabilities[person]["gene"][0] += p
             if person in have_trait:
-                probabilities[person]["gene"][0] = p
-                probabilities[person]["trait"][True] = p
+                probabilities[person]["trait"][True] += p
             else:
-                probabilities[person]["gene"][0] = p
-                probabilities[person]["trait"][False] = p
+                probabilities[person]["trait"][False] += p
 
 def normalize(probabilities):
     """
@@ -348,7 +347,6 @@ def normalize(probabilities):
     """
     for person in probabilities:
         for item in probabilities[person]:
-            print(probabilities[person][item].items())
             total_inverse = 1.0 / sum(probabilities[person][item].values())
             for key, val in probabilities[person][item].items():
                 probabilities[person][item][key] = val * total_inverse
