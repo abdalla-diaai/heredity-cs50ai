@@ -141,34 +141,19 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     """
     joint_p = 1
     for person in people:
-        if people[person]['father'] is None and people[person]['mother'] is None:
-            if people[person]['name'] in one_gene:
-                joint_p *= PROBS["gene"][1]
-                if people[person]['name'] in have_trait:
-                    joint_p *= PROBS["trait"][1][True]
-                else:
-                    joint_p *= PROBS["trait"][1][False]
-                
-            if people[person]['name'] in two_genes:
-                joint_p *= PROBS["gene"][2]
-                if people[person]['name'] in have_trait:
-                    joint_p *= PROBS["trait"][2][True]
-                else:
-                    joint_p *= PROBS["trait"][2][False]
-            else:
-                joint_p *= PROBS["gene"][0]
-                if people[person]['name'] in have_trait:
-                    joint_p *= PROBS["trait"][0][True]
-                else:
-                    joint_p *= PROBS["trait"][0][False]
+        if check_parents(people, person):
+            joint_p *= gene_prob(people[person]['name'], one_gene, two_genes, have_trait)
+
         else:
-            if people[person]['name'] in one_gene:
-                    joint_p *= (((1 - PROBS["mutation"]) * (1 - PROBS["mutation"])) + (PROBS["mutation"] * PROBS["mutation"]))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-    print(joint_p)
+            print(parents(people, person, one_gene, two_genes))
+            if parents(people, person, one_gene, two_genes) == 5:
+                if people[person]['name'] in one_gene:
+                        joint_p *= (((1 - PROBS["mutation"]) * (1 - PROBS["mutation"])) + (PROBS["mutation"] * PROBS["mutation"]))
+                        if people[person]['name'] in have_trait:
+                            joint_p *= PROBS["trait"][1][True]
+                        else:
+                            joint_p *= PROBS["trait"][1][False]
+            
     return joint_p
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
@@ -191,6 +176,51 @@ def normalize(probabilities):
         probabilities[key] = val * total_inverse
     return probabilities
 
+def check_parents(people, person):
+    if people[person]['father'] is None and people[person]['mother'] is None:
+        return True
+    return False
 
+
+def gene_prob(person, one_gene, two_genes, have_trait):
+    """
+    Return gene probability, father and mother are None
+    """
+    if person in have_trait:
+        if person in one_gene:
+            return PROBS["gene"][1] * PROBS["trait"][1][True] 
+        if person in two_genes:
+            return PROBS["gene"][2] * PROBS["trait"][2][True]
+        else:
+            return PROBS["gene"][0] * PROBS["trait"][0][True]
+    else:
+        if person in one_gene:
+            return PROBS["gene"][1] * PROBS["trait"][1][False] 
+        if person in two_genes:
+            return PROBS["gene"][2] * PROBS["trait"][2][False]
+        else:
+            return PROBS["gene"][0] * PROBS["trait"][0][False]
+
+def parents(people, person, one_gene, two_genes):
+    if zero_copies(people, 'father', person, one_gene, two_genes) and zero_copies(people, 'mother', person, one_gene, two_genes):
+        return 0
+    if people[person]['father'] in one_gene and people[person]['mother'] in one_gene:
+        return 1
+    if people[person]['father'] in two_genes and people[person]['mother'] in two_genes:
+        return 2
+    if people[person]['father'] in one_gene and people[person]['mother'] in two_genes or people[person]['father'] in two_genes and people[person]['mother'] in one_gene:
+        return 3
+    if zero_copies(people, 'father', person, one_gene, two_genes) and people[person]['mother'] in one_gene or zero_copies(people, 'mother', person, one_gene, two_genes) and people[person]['father'] in one_gene:
+        return 4
+    if zero_copies(people, 'father', person, one_gene, two_genes) and people[person]['mother'] in two_genes or zero_copies(people, 'mother', person, one_gene, two_genes) and people[person]['father'] in two_genes:
+        return 5
+
+def zero_copies(people, parent, person, one_gene, two_genes):
+    if people[person][parent] not in one_gene and people[person][parent] not in two_genes:
+        return True
+    return False
+    
+
+    
 if __name__ == "__main__":
     main()
