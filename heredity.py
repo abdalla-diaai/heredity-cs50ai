@@ -317,6 +317,5 @@ def normalize(probabilities):
             for key, val in probabilities[person][item].items():
                 probabilities[person][item][key] = val * total_inverse
 
-
 if __name__ == "__main__":
     main()
