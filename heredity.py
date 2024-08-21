@@ -142,9 +142,9 @@ def joint_probability(people, one_gene, two_genes, have_trait):
     joint_p = 1
     for person in people:
         if check_parents(people, person):
-            joint_p *= gene_prob(people[person]['name'], one_gene, two_genes, have_trait)
-
+            joint_p *= gene_prob(person, one_gene, two_genes, have_trait)
         else:
+            # zero copies in both parents
             if parents(people, person, one_gene, two_genes) == 0:
                 if people[person]['name'] in one_gene:
                     joint_p *= ((1 - PROBS["mutation"]) * (PROBS["mutation"]) + (1 - PROBS["mutation"]) * (PROBS["mutation"]))
@@ -164,7 +164,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
-
+            # one copy for both parents
             if parents(people, person, one_gene, two_genes) == 1:
                 if people[person]['name'] in one_gene:
                     joint_p *= ((0.5 * 0.5) + (0.5 * 0.5))
@@ -184,7 +184,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
-                    
+            # two copies for both parents        
             if parents(people, person, one_gene, two_genes) == 2:
                 if people[person]['name'] in one_gene:
                     joint_p *= ((1 - PROBS["mutation"]) * (PROBS["mutation"]) + (1 - PROBS["mutation"]) * (PROBS["mutation"]))
@@ -204,7 +204,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
-
+            # one copy for one parent and two copies for the other parent
             if parents(people, person, one_gene, two_genes) == 3:
                 if people[person]['name'] in one_gene:
                     joint_p *= ((0.5 * (PROBS["mutation"])) + ((1 - PROBS["mutation"]) * 0.5))
@@ -224,7 +224,7 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
-            
+            # one copy for one parent and zero copies for the other parent
             if parents(people, person, one_gene, two_genes) == 4:
                 if people[person]['name'] in one_gene:
                     joint_p *= ((0.5 * (PROBS["mutation"])) + ((1 - PROBS["mutation"]) * 0.5))
@@ -244,15 +244,16 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
-
+            
+            # two copies for one parent and zero copies for the other parent
             if parents(people, person, one_gene, two_genes) == 5:
                 if people[person]['name'] in one_gene:
-                    joint_p *= (((1 - PROBS["mutation"]) * (1 - PROBS["mutation"])) + (PROBS["mutation"] * PROBS["mutation"]))
+                    joint_p *= (1 - PROBS["mutation"] * 1 - PROBS["mutation"]) + PROBS["mutation"] * PROBS["mutation"]
                     if people[person]['name'] in have_trait:
                         joint_p *= PROBS["trait"][1][True]
                     else:
                         joint_p *= PROBS["trait"][1][False]
-                if people[person]['name'] in two_genes:
+                elif people[person]['name'] in two_genes:
                     joint_p *= ((1 - PROBS["mutation"]) * PROBS["mutation"])
                     if people[person]['name'] in have_trait:
                         joint_p *= PROBS["trait"][2][True]
@@ -264,8 +265,8 @@ def joint_probability(people, one_gene, two_genes, have_trait):
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
-            
     return joint_p
+
 def check_parents(people, person):
     if people[person]['father'] is None and people[person]['mother'] is None:
         return True

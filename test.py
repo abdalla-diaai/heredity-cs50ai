@@ -37,6 +37,6 @@ people = {
   'James': {'name': 'James', 'mother': None, 'father': None, 'trait': True},
   'Lily': {'name': 'Lily', 'mother': None, 'father': None, 'trait': False}
 }
-print(joint_probability(people, {"Harry"}, {"Lily"}, {"Lily"}))
+print(joint_probability(people, {"Harry"}, {"James"}, {"James"}))
 
-
+print(0.9801 * 0.006500000000000001 * 0.44 * 0.9503999999999999)
