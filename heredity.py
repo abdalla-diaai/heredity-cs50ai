@@ -3,37 +3,18 @@ import itertools
 import sys
 
 PROBS = {
-
     # Unconditional probabilities for having gene
-    "gene": {
-        2: 0.01,
-        1: 0.03,
-        0: 0.96
-    },
-
+    "gene": {2: 0.01, 1: 0.03, 0: 0.96},
     "trait": {
-
         # Probability of trait given two copies of gene
-        2: {
-            True: 0.65,
-            False: 0.35
-        },
-
+        2: {True: 0.65, False: 0.35},
         # Probability of trait given one copy of gene
-        1: {
-            True: 0.56,
-            False: 0.44
-        },
-
+        1: {True: 0.56, False: 0.44},
         # Probability of trait given no gene
-        0: {
-            True: 0.01,
-            False: 0.99
-        }
+        0: {True: 0.01, False: 0.99},
     },
-
     # Mutation probability
-    "mutation": 0.01
+    "mutation": 0.01,
 }
 
 
@@ -46,17 +27,7 @@ def main():
 
     # Keep track of gene and trait probabilities for each person
     probabilities = {
-        person: {
-            "gene": {
-                2: 0,
-                1: 0,
-                0: 0
-            },
-            "trait": {
-                True: 0,
-                False: 0
-            }
-        }
+        person: {"gene": {2: 0, 1: 0, 0: 0}, "trait": {True: 0, False: 0}}
         for person in people
     }
 
@@ -66,8 +37,10 @@ def main():
 
         # Check if current set of people violates known information
         fails_evidence = any(
-            (people[person]["trait"] is not None and
-             people[person]["trait"] != (person in have_trait))
+            (
+                people[person]["trait"] is not None
+                and people[person]["trait"] != (person in have_trait)
+            )
             for person in names
         )
         if fails_evidence:
@@ -110,8 +83,11 @@ def load_data(filename):
                 "name": name,
                 "mother": row["mother"] or None,
                 "father": row["father"] or None,
-                "trait": (True if row["trait"] == "1" else
-                          False if row["trait"] == "0" else None)
+                "trait": (
+                    True
+                    if row["trait"] == "1"
+                    else False if row["trait"] == "0" else None
+                ),
             }
     return data
 
@@ -122,7 +98,8 @@ def powerset(s):
     """
     s = list(s)
     return [
-        set(s) for s in itertools.chain.from_iterable(
+        set(s)
+        for s in itertools.chain.from_iterable(
             itertools.combinations(s, r) for r in range(len(s) + 1)
         )
     ]
@@ -146,129 +123,93 @@ def joint_probability(people, one_gene, two_genes, have_trait):
         else:
             # zero copies in both parents
             if parents(people, person, one_gene, two_genes) == 0:
-                if people[person]['name'] in one_gene:
-                    joint_p *= ((1 - PROBS["mutation"]) * (PROBS["mutation"]) + (1 - PROBS["mutation"]) * (PROBS["mutation"]))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-                elif people[person]['name'] in two_genes:
-                    joint_p *= (PROBS["mutation"] * PROBS["mutation"])
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][2][True]
-                    else:
-                        joint_p *= PROBS["trait"][2][False]
+                if people[person]["name"] in one_gene:
+                    joint_p *= (1 - PROBS["mutation"]) * (PROBS["mutation"]) + (
+                        1 - PROBS["mutation"]
+                    ) * (PROBS["mutation"])
+                elif people[person]["name"] in two_genes:
+                    joint_p *= PROBS["mutation"] * PROBS["mutation"]
                 else:
-                    joint_p *= ((1 - PROBS["mutation"]) * (1 - PROBS["mutation"]))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][0][True]
-                    else:
-                        joint_p *= PROBS["trait"][0][False]
+                    joint_p *= (1 - PROBS["mutation"]) * (1 - PROBS["mutation"])
+
             # one copy for both parents
             if parents(people, person, one_gene, two_genes) == 1:
-                if people[person]['name'] in one_gene:
-                    joint_p *= ((0.5 * 0.5) + (0.5 * 0.5))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-                elif people[person]['name'] in two_genes:
-                    joint_p *= (0.5 * 0.5)
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][2][True]
-                    else:
-                        joint_p *= PROBS["trait"][2][False]
+                if people[person]["name"] in one_gene:
+                    joint_p *= (0.5 * 0.5) + (0.5 * 0.5)
+                elif people[person]["name"] in two_genes:
+                    joint_p *= 0.5 * 0.5
                 else:
-                    joint_p *= (0.5 * 0.5)
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][0][True]
-                    else:
-                        joint_p *= PROBS["trait"][0][False]
-            # two copies for both parents        
+                    joint_p *= 0.5 * 0.5
+
+            # two copies for both parents
             if parents(people, person, one_gene, two_genes) == 2:
-                if people[person]['name'] in one_gene:
-                    joint_p *= ((1 - PROBS["mutation"]) * (PROBS["mutation"]) + (1 - PROBS["mutation"]) * (PROBS["mutation"]))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-                elif people[person]['name'] in two_genes:
-                    joint_p *= ((1 - PROBS["mutation"]) * (1 - PROBS["mutation"]))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][2][True]
-                    else:
-                        joint_p *= PROBS["trait"][2][False]
+                if people[person]["name"] in one_gene:
+                    joint_p *= (1 - PROBS["mutation"]) * (PROBS["mutation"]) + (
+                        1 - PROBS["mutation"]
+                    ) * (PROBS["mutation"])
+                elif people[person]["name"] in two_genes:
+                    joint_p *= (1 - PROBS["mutation"]) * (1 - PROBS["mutation"])
                 else:
-                    joint_p *= (PROBS["mutation"] * PROBS["mutation"])
-                    if people[person]['name'] in have_trait:
+                    joint_p *= PROBS["mutation"] * PROBS["mutation"]
+                    if people[person]["name"] in have_trait:
                         joint_p *= PROBS["trait"][0][True]
                     else:
                         joint_p *= PROBS["trait"][0][False]
+
             # one copy for one parent and two copies for the other parent
             if parents(people, person, one_gene, two_genes) == 3:
-                if people[person]['name'] in one_gene:
-                    joint_p *= ((0.5 * (PROBS["mutation"])) + ((1 - PROBS["mutation"]) * 0.5))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-                elif people[person]['name'] in two_genes:
-                    joint_p *= (0.5 * (1 - PROBS["mutation"]))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][2][True]
-                    else:
-                        joint_p *= PROBS["trait"][2][False]
+                if people[person]["name"] in one_gene:
+                    joint_p *= (0.5 * (PROBS["mutation"])) + (
+                        (1 - PROBS["mutation"]) * 0.5
+                    )
+                elif people[person]["name"] in two_genes:
+                    joint_p *= 0.5 * (1 - PROBS["mutation"])
                 else:
-                    joint_p *= (0.5 * PROBS["mutation"])
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][0][True]
-                    else:
-                        joint_p *= PROBS["trait"][0][False]
+                    joint_p *= 0.5 * PROBS["mutation"]
+
             # one copy for one parent and zero copies for the other parent
             if parents(people, person, one_gene, two_genes) == 4:
-                if people[person]['name'] in one_gene:
-                    joint_p *= ((0.5 * (PROBS["mutation"])) + ((1 - PROBS["mutation"]) * 0.5))
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-                elif people[person]['name'] in two_genes:
-                    joint_p *= (0.5 * PROBS["mutation"])
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][2][True]
-                    else:
-                        joint_p *= PROBS["trait"][2][False]
+                if people[person]["name"] in one_gene:
+                    joint_p *= (0.5 * (PROBS["mutation"])) + (
+                        (1 - PROBS["mutation"]) * 0.5
+                    )
+                elif people[person]["name"] in two_genes:
+                    joint_p *= 0.5 * PROBS["mutation"]
                 else:
-                    joint_p *= ((1 - PROBS["mutation"]) * 0.5)
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][0][True]
-                    else:
-                        joint_p *= PROBS["trait"][0][False]
-            
+                    joint_p *= (1 - PROBS["mutation"]) * 0.5
+
             # two copies for one parent and zero copies for the other parent
             if parents(people, person, one_gene, two_genes) == 5:
-                if people[person]['name'] in one_gene:
-                    joint_p *= (1 - PROBS["mutation"] * 1 - PROBS["mutation"]) + PROBS["mutation"] * PROBS["mutation"]
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][1][True]
-                    else:
-                        joint_p *= PROBS["trait"][1][False]
-                elif people[person]['name'] in two_genes:
-                    joint_p *= ((1 - PROBS["mutation"]) * PROBS["mutation"])
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][2][True]
-                    else:
-                        joint_p *= PROBS["trait"][2][False]
+                if people[person]["name"] in one_gene:
+                    joint_p *= (1 - PROBS["mutation"] * 1 - PROBS["mutation"]) + PROBS[
+                        "mutation"
+                    ] * PROBS["mutation"]
+                elif people[person]["name"] in two_genes:
+                    joint_p *= (1 - PROBS["mutation"]) * PROBS["mutation"]
                 else:
-                    joint_p *= ((1 - PROBS["mutation"]) * PROBS["mutation"])
-                    if people[person]['name'] in have_trait:
-                        joint_p *= PROBS["trait"][0][True]
-                    else:
-                        joint_p *= PROBS["trait"][0][False]
+                    joint_p *= (1 - PROBS["mutation"]) * PROBS["mutation"]
+
+            # calculate traits
+            if people[person]["name"] in have_trait:
+                if people[person]["name"] in one_gene:
+                    joint_p *= PROBS["trait"][1][True]
+                elif people[person]["name"] in two_genes:
+                    joint_p *= PROBS["trait"][2][True]
+                else:
+                    joint_p *= PROBS["trait"][0][True]
+            else:
+                if people[person]["name"] in one_gene:
+                    joint_p *= PROBS["trait"][1][False]
+                elif people[person]["name"] in two_genes:
+                    joint_p *= PROBS["trait"][2][False]
+                else:
+                    joint_p *= PROBS["trait"][0][False]
+
     return joint_p
 
+
 def check_parents(people, person):
-    if people[person]['father'] is None and people[person]['mother'] is None:
+    if people[person]["father"] is None and people[person]["mother"] is None:
         return True
     return False
 
@@ -279,37 +220,61 @@ def gene_prob(person, one_gene, two_genes, have_trait):
     """
     if person in have_trait:
         if person in one_gene:
-            return PROBS["gene"][1] * PROBS["trait"][1][True] 
+            return PROBS["gene"][1] * PROBS["trait"][1][True]
         if person in two_genes:
             return PROBS["gene"][2] * PROBS["trait"][2][True]
         else:
             return PROBS["gene"][0] * PROBS["trait"][0][True]
     else:
         if person in one_gene:
-            return PROBS["gene"][1] * PROBS["trait"][1][False] 
+            return PROBS["gene"][1] * PROBS["trait"][1][False]
         if person in two_genes:
             return PROBS["gene"][2] * PROBS["trait"][2][False]
         else:
             return PROBS["gene"][0] * PROBS["trait"][0][False]
 
+
 def parents(people, person, one_gene, two_genes):
-    if zero_copies(people, 'father', person, one_gene, two_genes) and zero_copies(people, 'mother', person, one_gene, two_genes):
+    if zero_copies(people, "father", person, one_gene, two_genes) and zero_copies(
+        people, "mother", person, one_gene, two_genes
+    ):
         return 0
-    if people[person]['father'] in one_gene and people[person]['mother'] in one_gene:
+    if people[person]["father"] in one_gene and people[person]["mother"] in one_gene:
         return 1
-    if people[person]['father'] in two_genes and people[person]['mother'] in two_genes:
+    if people[person]["father"] in two_genes and people[person]["mother"] in two_genes:
         return 2
-    if (people[person]['father'] in one_gene and people[person]['mother'] in two_genes) or (people[person]['father'] in two_genes and people[person]['mother'] in one_gene):
+    if (
+        people[person]["father"] in one_gene and people[person]["mother"] in two_genes
+    ) or (
+        people[person]["father"] in two_genes and people[person]["mother"] in one_gene
+    ):
         return 3
-    if (zero_copies(people, 'father', person, one_gene, two_genes) and people[person]['mother'] in one_gene) or (zero_copies(people, 'mother', person, one_gene, two_genes) and people[person]['father'] in one_gene):
+    if (
+        zero_copies(people, "father", person, one_gene, two_genes)
+        and people[person]["mother"] in one_gene
+    ) or (
+        zero_copies(people, "mother", person, one_gene, two_genes)
+        and people[person]["father"] in one_gene
+    ):
         return 4
-    if (zero_copies(people, 'father', person, one_gene, two_genes) and people[person]['mother'] in two_genes) or (zero_copies(people, 'mother', person, one_gene, two_genes) and people[person]['father'] in two_genes):
+    if (
+        zero_copies(people, "father", person, one_gene, two_genes)
+        and people[person]["mother"] in two_genes
+    ) or (
+        zero_copies(people, "mother", person, one_gene, two_genes)
+        and people[person]["father"] in two_genes
+    ):
         return 5
 
+
 def zero_copies(people, parent, person, one_gene, two_genes):
-    if people[person][parent] not in one_gene and people[person][parent] not in two_genes:
+    if (
+        people[person][parent] not in one_gene
+        and people[person][parent] not in two_genes
+    ):
         return True
     return False
+
 
 def update(probabilities, one_gene, two_genes, have_trait, p):
     """
@@ -325,7 +290,7 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
                 probabilities[person]["trait"][True] += p
             else:
                 probabilities[person]["trait"][False] += p
-    
+
         elif person in two_genes:
             probabilities[person]["gene"][2] += p
             if person in have_trait:
@@ -340,6 +305,7 @@ def update(probabilities, one_gene, two_genes, have_trait, p):
             else:
                 probabilities[person]["trait"][False] += p
 
+
 def normalize(probabilities):
     """
     Update `probabilities` such that each probability distribution
@@ -351,6 +317,6 @@ def normalize(probabilities):
             for key, val in probabilities[person][item].items():
                 probabilities[person][item][key] = val * total_inverse
 
-    
+
 if __name__ == "__main__":
     main()
